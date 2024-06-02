@@ -459,7 +459,7 @@ if __name__ == "__main__":
     #           target: importpath
     #           params:
     #               key: value
-
+    torch.multiprocessing.set_start_method('spawn')
     now = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
 
     # add cwd for convenience and to make classes in this file available when

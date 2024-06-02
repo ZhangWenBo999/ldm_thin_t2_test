@@ -55,6 +55,17 @@ class VQModel(pl.LightningModule):
     def encode(self, x):
         h = self.encoder(x)
         h = self.quant_conv(h)
+
+        # from PIL import Image
+        # import numpy as np
+        # path = "/home/zwb/zwb/code/0531/ldm_thin/process_images/train1/"
+        #
+        # quant_h_11_1 = h.clone().detach()
+        # quant_h_11_1 = quant_h_11_1.permute(0, 2, 3, 1)
+        # quant_h_11_1 = quant_h_11_1.squeeze(0)
+        # quant_h_11_1 = quant_h_11_1.cpu().numpy()
+        # Image.fromarray(np.uint8(quant_h_11_1)).save(path + f'quant_h_11_1.png')
+
         quant, emb_loss, info = self.quantize(h)
         return quant, emb_loss, info
 
@@ -69,8 +80,29 @@ class VQModel(pl.LightningModule):
         return dec
 
     def forward(self, input):
+
+        # from PIL import Image
+        # import numpy as np
+        # path = "/home/zwb/zwb/code/0531/ldm_thin/process_images/train1/"
+        #
+        # input_11_1 = input.clone().detach()
+        # input_11_1 = input_11_1.permute(0, 2, 3, 1)
+        # input_11_1 = input_11_1.squeeze(0)
+        # input_11_1 = input_11_1.cpu().numpy()
+        # Image.fromarray(np.uint8(input_11_1)).save(path + f'input_11_1.png')
+
         quant, diff, _ = self.encode(input)
         dec = self.decode(quant)
+
+        # from PIL import Image
+        # path = "/home/zwb/zwb/code/0531/ldm_thin/process_images/train1/"
+        #
+        # dec_11_1 = dec.clone().detach()
+        # dec_11_1 = dec_11_1.permute(0, 2, 3, 1)
+        # dec_11_1 = dec_11_1.squeeze(0)
+        # dec_11_1 = dec_11_1.cpu().numpy()
+        # Image.fromarray(np.uint8(dec_11_1)).save(path + f'dec_11_1.png')
+
         return dec, diff
 
     def get_input(self, batch, k):
@@ -82,6 +114,18 @@ class VQModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx, optimizer_idx):
         x = self.get_input(batch, self.image_key)
+
+        # from PIL import Image
+        # import numpy as np
+        # path = "/home/zwb/zwb/code/0531/ldm_thin/process_images/train1/"
+        #
+        # train_x = x.clone().detach()
+        # train_x = train_x.permute(0, 2, 3, 1)
+        # train_x = train_x.squeeze(0)
+        # train_x = train_x.cpu().numpy()
+        # Image.fromarray(np.uint8(train_x)).save(path + f'train_x.png')
+
+
         xrec, qloss = self(x)
 
         if optimizer_idx == 0:
@@ -89,7 +133,7 @@ class VQModel(pl.LightningModule):
             aeloss, log_dict_ae = self.loss(qloss, x, xrec, optimizer_idx, self.global_step,
                                             last_layer=self.get_last_layer(), split="train")
 
-            self.log("train/aeloss", aeloss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
+            self.log("train_aeloss", aeloss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
             self.log_dict(log_dict_ae, prog_bar=False, logger=True, on_step=True, on_epoch=True)
             return aeloss
 
@@ -97,22 +141,33 @@ class VQModel(pl.LightningModule):
             # discriminator
             discloss, log_dict_disc = self.loss(qloss, x, xrec, optimizer_idx, self.global_step,
                                             last_layer=self.get_last_layer(), split="train")
-            self.log("train/discloss", discloss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
+            self.log("train_discloss", discloss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
             self.log_dict(log_dict_disc, prog_bar=False, logger=True, on_step=True, on_epoch=True)
             return discloss
 
     def validation_step(self, batch, batch_idx):
         x = self.get_input(batch, self.image_key)
+
+        # from PIL import Image
+        # import numpy as np
+        # path = "/home/zwb/zwb/code/0531/ldm_thin/process_images/train1/"
+        #
+        # val_x = x.clone().detach()
+        # val_x = val_x.permute(0, 2, 3, 1)
+        # val_x = val_x.squeeze(0)
+        # val_x = val_x.cpu().numpy()
+        # Image.fromarray(np.uint8(val_x)).save(path + f'val_x.png')
+
         xrec, qloss = self(x)
         aeloss, log_dict_ae = self.loss(qloss, x, xrec, 0, self.global_step,
                                             last_layer=self.get_last_layer(), split="val")
 
         discloss, log_dict_disc = self.loss(qloss, x, xrec, 1, self.global_step,
                                             last_layer=self.get_last_layer(), split="val")
-        rec_loss = log_dict_ae["val/rec_loss"]
-        self.log("val/rec_loss", rec_loss,
+        rec_loss = log_dict_ae["val_rec_loss"]
+        self.log("val_rec_loss_temp", rec_loss,
                    prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
-        self.log("val/aeloss", aeloss,
+        self.log("val_aeloss", aeloss,
                    prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
         self.log_dict(log_dict_ae)
         self.log_dict(log_dict_disc)
@@ -183,8 +238,8 @@ class VQSegmentationModel(VQModel):
         xrec, qloss = self(x)
         aeloss, log_dict_ae = self.loss(qloss, x, xrec, split="val")
         self.log_dict(log_dict_ae, prog_bar=False, logger=True, on_step=True, on_epoch=True)
-        total_loss = log_dict_ae["val/total_loss"]
-        self.log("val/total_loss", total_loss,
+        total_loss = log_dict_ae["val_total_loss"]
+        self.log("val_total_loss", total_loss,
                  prog_bar=True, logger=True, on_step=True, on_epoch=True, sync_dist=True)
         return aeloss
 
@@ -229,7 +284,7 @@ class VQNoDiscModel(VQModel):
         # autoencode
         aeloss, log_dict_ae = self.loss(qloss, x, xrec, self.global_step, split="train")
         output = pl.TrainResult(minimize=aeloss)
-        output.log("train/aeloss", aeloss,
+        output.log("train_aeloss", aeloss,
                    prog_bar=True, logger=True, on_step=True, on_epoch=True)
         output.log_dict(log_dict_ae, prog_bar=False, logger=True, on_step=True, on_epoch=True)
         return output
@@ -238,11 +293,11 @@ class VQNoDiscModel(VQModel):
         x = self.get_input(batch, self.image_key)
         xrec, qloss = self(x)
         aeloss, log_dict_ae = self.loss(qloss, x, xrec, self.global_step, split="val")
-        rec_loss = log_dict_ae["val/rec_loss"]
+        rec_loss = log_dict_ae["val_rec_loss"]
         output = pl.EvalResult(checkpoint_on=rec_loss)
-        output.log("val/rec_loss", rec_loss,
+        output.log("val_rec_loss", rec_loss,
                    prog_bar=True, logger=True, on_step=True, on_epoch=True)
-        output.log("val/aeloss", aeloss,
+        output.log("val_aeloss", aeloss,
                    prog_bar=True, logger=True, on_step=True, on_epoch=True)
         output.log_dict(log_dict_ae)
 
@@ -339,10 +394,10 @@ class GumbelVQ(VQModel):
 
         discloss, log_dict_disc = self.loss(qloss, x, xrec, 1, self.global_step,
                                             last_layer=self.get_last_layer(), split="val")
-        rec_loss = log_dict_ae["val/rec_loss"]
-        self.log("val/rec_loss", rec_loss,
+        rec_loss = log_dict_ae["val_rec_loss"]
+        self.log("val_rec_loss", rec_loss,
                  prog_bar=True, logger=True, on_step=False, on_epoch=True, sync_dist=True)
-        self.log("val/aeloss", aeloss,
+        self.log("val_aeloss", aeloss,
                  prog_bar=True, logger=True, on_step=False, on_epoch=True, sync_dist=True)
         self.log_dict(log_dict_ae)
         self.log_dict(log_dict_disc)

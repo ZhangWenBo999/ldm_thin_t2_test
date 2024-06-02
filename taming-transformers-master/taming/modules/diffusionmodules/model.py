@@ -406,6 +406,15 @@ class Encoder(nn.Module):
     def forward(self, x):
         #assert x.shape[2] == x.shape[3] == self.resolution, "{}, {}, {}".format(x.shape[2], x.shape[3], self.resolution)
 
+        # from PIL import Image
+        # path = "/home/zwb/zwb/code/0531/ldm_thin/process_images/train1/"
+        #
+        # model_input_11_1 = x.clone().detach()
+        # model_input_11_1 = model_input_11_1.permute(0, 2, 3, 1)
+        # model_input_11_1 = model_input_11_1.squeeze(0)
+        # model_input_11_1 = model_input_11_1.cpu().numpy()
+        # Image.fromarray(np.uint8(model_input_11_1)).save(path + f'model_input_11_1.png')
+
         # timestep embedding
         temb = None
 
@@ -430,6 +439,13 @@ class Encoder(nn.Module):
         h = self.norm_out(h)
         h = nonlinearity(h)
         h = self.conv_out(h)
+
+        # model_h_11_1 = h.clone().detach()
+        # model_h_11_1 = model_h_11_1.permute(0, 2, 3, 1)
+        # model_h_11_1 = model_h_11_1.squeeze(0)
+        # model_h_11_1 = model_h_11_1.cpu().numpy()
+        # Image.fromarray(np.uint8(model_h_11_1)).save(path + f'model_h_11_1.png')
+
         return h
 
 

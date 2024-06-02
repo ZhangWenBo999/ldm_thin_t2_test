@@ -267,8 +267,33 @@ class VQModelInterface(VQModel):
         self.embed_dim = embed_dim
 
     def encode(self, x):
+
+        # import numpy as np
+        # from PIL import Image
+        # path = "/home/zwb/zwb/code/0531/ldm_thin/process_images/train2/"
+        #
+        # x_image = x.clone().detach()
+        # x_image = x_image.permute(0, 2, 3, 1)
+        # x_image = x_image.squeeze(0)
+        # x_image = x_image.cpu().numpy()
+        # Image.fromarray(np.uint8(x_image)).save(path + f'x_image.png')
+
         h = self.encoder(x)
+
+        # h_image = h.clone().detach()
+        # h_image = h_image.permute(0, 2, 3, 1)
+        # h_image = h_image.squeeze(0)
+        # h_image = h_image.cpu().numpy()
+        # Image.fromarray(np.uint8(h_image)).save(path + f'h_image.png')
+
         h = self.quant_conv(h)
+
+        # quant_h_image = h.clone().detach()
+        # quant_h_image = quant_h_image.permute(0, 2, 3, 1)
+        # quant_h_image = quant_h_image.squeeze(0)
+        # quant_h_image = quant_h_image.cpu().numpy()
+        # Image.fromarray(np.uint8(quant_h_image)).save(path + f'quant_h_image.png')
+
         return h
 
     def decode(self, h, force_not_quantize=False):

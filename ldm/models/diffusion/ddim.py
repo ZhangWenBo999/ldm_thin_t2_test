@@ -123,6 +123,21 @@ class DDIMSampler(object):
         else:
             img = x_T
 
+        # from PIL import Image
+        # path = "/home/zwb/zwb/code/0531/ldm_thin/process_images/test/"
+        #
+        # sample_image = img.clone().detach()
+        # sample_image = sample_image.permute(0, 2, 3, 1)
+        # sample_image = sample_image.squeeze(0)
+        # sample_image = sample_image.cpu().numpy()
+        # Image.fromarray(np.uint8(sample_image)).save(path + f'sample_image.png')
+
+        # cond_image = cond.clone().detach()
+        # cond_image = cond_image.permute(0, 2, 3, 1)
+        # cond_image = cond_image.squeeze(0)
+        # cond_image = cond_image.cpu().numpy()
+        # Image.fromarray(np.uint8(cond_image)).save(path + f'cond_image.png')
+
         if timesteps is None:
             timesteps = self.ddpm_num_timesteps if ddim_use_original_steps else self.ddim_timesteps
         elif timesteps is not None and not ddim_use_original_steps:
@@ -152,6 +167,19 @@ class DDIMSampler(object):
                                       unconditional_guidance_scale=unconditional_guidance_scale,
                                       unconditional_conditioning=unconditional_conditioning)
             img, pred_x0 = outs
+
+            # out_image = img.clone().detach()
+            # out_image = out_image.permute(0, 2, 3, 1)
+            # out_image = out_image.squeeze(0)
+            # out_image = out_image.cpu().numpy()
+            # Image.fromarray(np.uint8(out_image)).save(path + f'out_image.png')
+
+            # out_pred_x0 = pred_x0.clone().detach()
+            # out_pred_x0 = out_pred_x0.permute(0, 2, 3, 1)
+            # out_pred_x0 = out_pred_x0.squeeze(0)
+            # out_pred_x0 = out_pred_x0.cpu().numpy()
+            # Image.fromarray(np.uint8(out_pred_x0)).save(path + f'out_pred_x0.png')
+
             if callback: callback(i)
             if img_callback: img_callback(pred_x0, i)
 

@@ -51,7 +51,7 @@ class DDPM(pl.LightningModule):
                  ckpt_path=None,
                  ignore_keys=[],
                  load_only_unet=False,
-                 monitor="val/loss",
+                 monitor="val_loss",
                  use_ema=True,
                  first_stage_key="image",
                  image_size=256,
@@ -308,15 +308,15 @@ class DDPM(pl.LightningModule):
 
         log_prefix = 'train' if self.training else 'val'
 
-        loss_dict.update({f'{log_prefix}/loss_simple': loss.mean()})
+        loss_dict.update({f'{log_prefix}_loss_simple': loss.mean()})
         loss_simple = loss.mean() * self.l_simple_weight
 
         loss_vlb = (self.lvlb_weights[t] * loss).mean()
-        loss_dict.update({f'{log_prefix}/loss_vlb': loss_vlb})
+        loss_dict.update({f'{log_prefix}_loss_vlb': loss_vlb})
 
         loss = loss_simple + self.original_elbo_weight * loss_vlb
 
-        loss_dict.update({f'{log_prefix}/loss': loss})
+        loss_dict.update({f'{log_prefix}_loss': loss})
 
         return loss, loss_dict
 
@@ -336,6 +336,7 @@ class DDPM(pl.LightningModule):
 
     def shared_step(self, batch):
         x = self.get_input(batch, self.first_stage_key)
+        self.batch = batch
         loss, loss_dict = self(x)
         return loss, loss_dict
 
@@ -864,10 +865,28 @@ class LatentDiffusion(DDPM):
 
     def shared_step(self, batch, **kwargs):
         x, c = self.get_input(batch, self.first_stage_key)
+        self.batch = batch
         loss = self(x, c)
         return loss
 
     def forward(self, x, c, *args, **kwargs):
+
+        # import numpy as np
+        # from PIL import Image
+        # path = "/home/zwb/zwb/code/0531/ldm_thin/process_images/train2/"
+        #
+        # x_image_2 = x.clone().detach()
+        # x_image_2 = x_image_2.permute(0, 2, 3, 1)
+        # x_image_2 = x_image_2.squeeze(0)
+        # x_image_2 = x_image_2.cpu().numpy()
+        # Image.fromarray(np.uint8(x_image_2)).save(path + f'x_image_2.png')
+        #
+        # c_image_2 = c.clone().detach()
+        # c_image_2 = c_image_2.permute(0, 2, 3, 1)
+        # c_image_2 = c_image_2.squeeze(0)
+        # c_image_2 = c_image_2.cpu().numpy()
+        # Image.fromarray(np.uint8(c_image_2)).save(path + f'c_image_2.png')
+
         t = torch.randint(0, self.num_timesteps, (x.shape[0],), device=self.device).long()
         if self.model.conditioning_key is not None:
             assert c is not None
@@ -1011,8 +1030,51 @@ class LatentDiffusion(DDPM):
 
     def p_losses(self, x_start, cond, t, noise=None):
         noise = default(noise, lambda: torch.randn_like(x_start))
+
+        # import numpy as np
+        # from PIL import Image
+        # path = "/home/zwb/zwb/code/0531/ldm_thin/process_images/train2/"
+        #
+        # noise_image = noise.clone().detach()
+        # noise_image = noise_image.permute(0, 2, 3, 1)
+        # noise_image = noise_image.squeeze(0)
+        # noise_image = noise_image.cpu().numpy()
+        # Image.fromarray(np.uint8(noise_image)).save(path + f'noise_image.png')
+
         x_noisy = self.q_sample(x_start=x_start, t=t, noise=noise)
+
+        # x_noisy_image = x_noisy.clone().detach()
+        # x_noisy_image = x_noisy_image.permute(0, 2, 3, 1)
+        # x_noisy_image = x_noisy_image.squeeze(0)
+        # x_noisy_image = x_noisy_image.cpu().numpy()
+        # Image.fromarray(np.uint8(x_noisy_image)).save(path + f'x_noisy_image.png')
+
+        cc = torch.nn.functional.interpolate(self.batch["mask"].permute(0, 3, 1, 2),
+                                             size=x_noisy.shape[-2:])
+
+        # cc_image = cc.clone().detach()
+        # cc_image = cc_image.permute(0, 2, 3, 1)
+        # cc_image = cc_image.squeeze(0)
+        # cc_image = cc_image.squeeze(2)
+        # cc_image = cc_image.cpu().numpy()
+        # Image.fromarray(np.uint8(cc_image)).save(path + f'cc_image.png')
+
+        x_noisy = torch.cat((x_noisy, cc), dim=1)
+
+        # x_noisy_cc_image = x_noisy.clone().detach()
+        # x_noisy_cc_image = x_noisy_cc_image.permute(0, 2, 3, 1)
+        # x_noisy_cc_image = x_noisy_cc_image.squeeze(0)
+        # # x_noisy_cc_image = x_noisy_cc_image.squeeze(2)
+        # x_noisy_cc_image = x_noisy_cc_image.cpu().numpy()
+        # Image.fromarray(np.uint8(x_noisy_cc_image)).save(path + f'x_noisy_cc_image.png')
+
         model_output = self.apply_model(x_noisy, t, cond)
+
+        # model_output_image = model_output.clone().detach()
+        # model_output_image = model_output_image.permute(0, 2, 3, 1)
+        # model_output_image = model_output_image.squeeze(0)
+        # model_output_image = model_output_image.cpu().numpy()
+        # Image.fromarray(np.uint8(model_output_image)).save(path + f'model_output_image.png')
 
         loss_dict = {}
         prefix = 'train' if self.training else 'val'
@@ -1025,22 +1087,22 @@ class LatentDiffusion(DDPM):
             raise NotImplementedError()
 
         loss_simple = self.get_loss(model_output, target, mean=False).mean([1, 2, 3])
-        loss_dict.update({f'{prefix}/loss_simple': loss_simple.mean()})
+        loss_dict.update({f'{prefix}_loss_simple': loss_simple.mean()})
 
         logvar_t = self.logvar[t].to(self.device)
         loss = loss_simple / torch.exp(logvar_t) + logvar_t
         # loss = loss_simple / torch.exp(self.logvar) + self.logvar
         if self.learn_logvar:
-            loss_dict.update({f'{prefix}/loss_gamma': loss.mean()})
+            loss_dict.update({f'{prefix}_loss_gamma': loss.mean()})
             loss_dict.update({'logvar': self.logvar.data.mean()})
 
         loss = self.l_simple_weight * loss.mean()
 
         loss_vlb = self.get_loss(model_output, target, mean=False).mean(dim=(1, 2, 3))
         loss_vlb = (self.lvlb_weights[t] * loss_vlb).mean()
-        loss_dict.update({f'{prefix}/loss_vlb': loss_vlb})
+        loss_dict.update({f'{prefix}_loss_vlb': loss_vlb})
         loss += (self.original_elbo_weight * loss_vlb)
-        loss_dict.update({f'{prefix}/loss': loss})
+        loss_dict.update({f'{prefix}_loss': loss})
 
         return loss, loss_dict
 
@@ -1403,8 +1465,32 @@ class DiffusionWrapper(pl.LightningModule):
         if self.conditioning_key is None:
             out = self.diffusion_model(x, t)
         elif self.conditioning_key == 'concat':
+
+            # from PIL import Image
+            # path = "/home/zwb/zwb/code/0531/ldm_thin/process_images/test/"
+            #
+            # x_image = x.clone().detach()
+            # x_image = x_image.permute(0, 2, 3, 1)
+            # x_image = x_image.squeeze(0)
+            # x_image = x_image.cpu().numpy()
+            # Image.fromarray(np.uint8(x_image)).save(path + f'x_image.png')
+
+            # c_concat_image = c_concat[0].clone().detach()
+            # c_concat_image = c_concat_image.permute(0, 2, 3, 1)
+            # c_concat_image = c_concat_image.squeeze(0)
+            # c_concat_image = c_concat_image.cpu().numpy()
+            # Image.fromarray(np.uint8(c_concat_image)).save(path + f'c_concat_image.png')
+
             xc = torch.cat([x] + c_concat, dim=1)
+
             out = self.diffusion_model(xc, t)
+
+            # out_image = out.clone().detach()
+            # out_image = out_image.permute(0, 2, 3, 1)
+            # out_image = out_image.squeeze(0)
+            # out_image = out_image.cpu().numpy()
+            # Image.fromarray(np.uint8(out_image)).save(path + f'out_image.png')
+
         elif self.conditioning_key == 'crossattn':
             cc = torch.cat(c_crossattn, 1)
             out = self.diffusion_model(x, t, context=cc)

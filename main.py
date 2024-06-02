@@ -20,6 +20,9 @@ from pytorch_lightning.utilities import rank_zero_info
 from ldm.data.base import Txt2ImgIterableBaseDataset
 from ldm.util import instantiate_from_config
 
+# export GPU_ID = 0,1
+
+# export CUDA_VISIBLE_DEVICES= 0,1
 
 def get_parser(**parser_kwargs):
     def str2bool(v):
@@ -570,7 +573,7 @@ if __name__ == "__main__":
             "target": "pytorch_lightning.callbacks.ModelCheckpoint",
             "params": {
                 "dirpath": ckptdir,
-                "filename": "{epoch:06}",
+                "filename": "{epoch:06}-{val_loss_simple_ema:.7f}",
                 "verbose": True,
                 "save_last": True,
             }

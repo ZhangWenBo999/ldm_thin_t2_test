@@ -7,18 +7,16 @@ model:
     num_timesteps_cond: 1
     log_every_t: 200
     timesteps: 1000
-    first_stage_key: masked_image
-    cond_stage_key: masked_image
+    first_stage_key: image
     image_size: 64
     channels: 3
-#    concat_mode: true
-    monitor: val_loss_simple_ema
+    monitor: val/loss_simple_ema
 
     unet_config:
       target: ldm.modules.diffusionmodules.openaimodel.UNetModel
       params:
         image_size: 64
-        in_channels: 7
+        in_channels: 3
         out_channels: 3
         model_channels: 224
         attention_resolutions:
@@ -58,29 +56,21 @@ model:
           dropout: 0.0
         lossconfig:
           target: torch.nn.Identity
-    cond_stage_config: __is_first_stage__
+    cond_stage_config: __is_unconditional__
 data:
   target: main.DataModuleFromConfig
   params:
-#    batch_size: 48
-#    num_workers: 5
-    batch_size: 3
-    num_workers: 0
+    batch_size: 48
+    num_workers: 5
     wrap: false
     train:
-#      target: taming.data.faceshq.CelebAHQTrain
-      target: taming.data.custom.CustomTrain
+      target: taming.data.faceshq.CelebAHQTrain
       params:
-        training_images_list_file: /home/zwb/zwb/code/0531/ldm_thin/datasets/celeba-hq-dataset/train_shuffled_w.flist
         size: 256
-        mask_mode: m7   # 'hybrid' 'center' 'ThinStrokes',  'MediumStrokes', 'ThickStrokes', 'Every_N_Lines', 'Completion', 'Expand', 'Nearest_Neighbor', m3, m5, m7
     validation:
-#      target: taming.data.faceshq.CelebAHQValidation
-      target: taming.data.custom.CustomTest
+      target: taming.data.faceshq.CelebAHQValidation
       params:
-        test_images_list_file: /home/zwb/zwb/code/0531/ldm_thin/datasets/celeba-hq-dataset/val_shuffled_w.flist
         size: 256
-        mask_mode: center   # 'hybrid' 'center' 'ThinStrokes',  'MediumStrokes', 'ThickStrokes', 'Every_N_Lines', 'Completion', 'Expand', 'Nearest_Neighbor', m3, m5, m7
 
 
 lightning:

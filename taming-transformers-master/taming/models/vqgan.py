@@ -5,7 +5,7 @@ import pytorch_lightning as pl
 from main import instantiate_from_config
 
 import sys
-sys.path.append("/kaggle/working/ldm_thin/taming-transformers-master")
+sys.path.append("/kaggle/working/ldm_thin_t2_test/taming-transformers-master")
 
 from taming.modules.diffusionmodules.model import Encoder, Decoder
 from taming.modules.vqvae.quantize import VectorQuantizer2 as VectorQuantizer

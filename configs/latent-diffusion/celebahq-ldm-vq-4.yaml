@@ -64,8 +64,8 @@ data:
   params:
 #    batch_size: 48
 #    num_workers: 5
-    batch_size: 5
-    num_workers: 5
+    batch_size: 6
+    num_workers: 4
     wrap: false
     train:
 #      target: taming.data.faceshq.CelebAHQTrain
@@ -73,7 +73,7 @@ data:
       params:
         training_images_list_file: /kaggle/working/ldm_thin_t2_test/datasets/celeba-hq-dataset/train_shuffled_Kaggle.flist
         size: 256
-        mask_mode: m7   # 'hybrid' 'center' 'ThinStrokes',  'MediumStrokes', 'ThickStrokes', 'Every_N_Lines', 'Completion', 'Expand', 'Nearest_Neighbor', m3, m5, m7
+        mask_mode: ThinStrokes   # 'hybrid' 'center' 'ThinStrokes',  'MediumStrokes', 'ThickStrokes', 'Every_N_Lines', 'Completion', 'Expand', 'Nearest_Neighbor', m3, m5, m7
     validation:
 #      target: taming.data.faceshq.CelebAHQValidation
       target: taming.data.custom.CustomTest

@@ -573,7 +573,7 @@ if __name__ == "__main__":
             "target": "pytorch_lightning.callbacks.ModelCheckpoint",
             "params": {
                 "dirpath": ckptdir,
-                "filename": "{epoch:06}-{val_rec_loss:.7f}",
+                "filename": "{epoch:06}-{val_loss_simple_ema:.7f}",
                 "verbose": True,
                 "save_last": True,
             }

@@ -1362,6 +1362,9 @@ class LatentDiffusion(DDPM):
         if sample:
             # get denoise row
             with self.ema_scope("Plotting"):
+                cc = torch.nn.functional.interpolate(batch["mask"].permute(0, 3, 1, 2),
+                                                     size=c.shape[-2:])
+                c = torch.cat((c, cc), dim=1)
                 samples, z_denoise_row = self.sample_log(cond=c,batch_size=N,ddim=use_ddim,
                                                          ddim_steps=ddim_steps,eta=ddim_eta)
                 # samples, z_denoise_row = self.sample(cond=c, batch_size=N, return_intermediates=True)

@@ -64,7 +64,7 @@ data:
   params:
 #    batch_size: 48
 #    num_workers: 5
-    batch_size: 7
+    batch_size: 6
     num_workers: 4
     wrap: false
     train:

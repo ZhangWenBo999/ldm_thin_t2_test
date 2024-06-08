@@ -54,6 +54,16 @@ def get_parser(**parser_kwargs):
         nargs="?",
         help="resume from logdir or checkpoint in logdir",
     )
+
+    parser.add_argument(
+        "--resume_ckpt",
+        type=str,
+        const=True,
+        default="",
+        nargs="?",
+        help="resume from logdir or checkpoint in logdir",
+    )
+
     parser.add_argument(
         "-b",
         "--base",
@@ -491,7 +501,13 @@ if __name__ == "__main__":
             logdir = opt.resume.rstrip("/")
             ckpt = os.path.join(logdir, "checkpoints", "last.ckpt")
 
-        opt.resume_from_checkpoint = ckpt
+        ckpt = opt.resume_ckpt
+        # opt.resume_from_checkpoint = ckpt
+
+        # ckpt file path
+        if opt.resume_ckpt:
+            opt.resume_from_checkpoint = opt.resume_ckpt
+
         base_configs = sorted(glob.glob(os.path.join(logdir, "configs/*.yaml")))
         opt.base = base_configs + opt.base
         _tmp = logdir.split("/")
@@ -522,6 +538,7 @@ if __name__ == "__main__":
         trainer_config = lightning_config.get("trainer", OmegaConf.create())
         # default to ddp
         trainer_config["accelerator"] = "ddp"
+        trainer_config['max_epochs'] = 7
         for k in nondefault_trainer_args(opt):
             trainer_config[k] = getattr(opt, k)
         if not "gpus" in trainer_config:

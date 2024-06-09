@@ -50,7 +50,7 @@ model:
         n_embed: 8192
 #        monitor: val/rec_loss
         monitor: val_rec_loss
-        ckpt_path: models/first_stage_models/vq-f4-noattn/model.ckpt
+        ckpt_path: /kaggle/input/vq-f4-noattn/model.ckpt
         ddconfig:
           attn_type: none
           double_z: false
@@ -75,7 +75,7 @@ data:
   params:
 #    batch_size: 48
 #    num_workers: 5
-    batch_size: 6
+    batch_size: 5
     num_workers: 4
     wrap: false
     train:

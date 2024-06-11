@@ -5,10 +5,10 @@ from tqdm import tqdm
 import numpy as np
 import torch
 
-# import sys
-# sys.path.append("/kaggle/working/ldm_thin_t2_test")
+import sys
+sys.path.append("/kaggle/working/ldm_thin_t2_test")
 
-from ..main import instantiate_from_config
+from main import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
 
 def make_batch(image, mask, device):
